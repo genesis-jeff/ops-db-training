@@ -1,0 +1,55 @@
+#docker-compose -p replicaset -f mongodb-replica-set.yml up
+#
+#
+## Create replica set
+#docker exec -it rs0 bash
+#
+#mongo localhost:27018
+#rs.initiate(
+#  {
+#    _id: "shard0",
+#    members: [
+#      { _id : 0, host : "rs0:27018" },
+#      { _id : 1, host : "rs1:27018" },
+#      { _id : 2, host : "rs2:27018" }
+#    ]
+#  }
+#)
+## Wait till primary
+#rs.status()
+#https://docs.mongodb.com/v3.4/tutorial/change-oplog-size/ 
+
+
+version: '3'
+services:
+  rs0:
+    container_name: rs0
+    image: "mongo:3.4"
+    volumes:
+      - ./rs/mongodb/r0:/data/db
+    expose:
+      - "27018"
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "shard0", "--shardsvr", "--smallfiles", "--oplogSize", "10"]
+  rs1:
+    container_name: rs1
+    image: "mongo:3.4"
+    volumes:
+      - ./rs/mongodb/r1:/data/db
+    expose:
+      - "27018"
+    entrypoint: [ "/usr/bin/mongod",  "--replSet", "shard0", "--shardsvr", "--smallfiles", "--oplogSize", "10"]
+  rs2:
+    container_name: rs2
+    image: "mongo:3.4"
+    volumes:
+      - ./rs/mongodb/r2:/data/db
+    expose:
+      - "27018"
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "shard0", "--shardsvr", "--smallfiles", "--oplogSize", "10"]
+  java:
+    container_name: java
+    image: "openjdk:8"
+    volumes:
+      - $PWD:/java
+    entrypoint: [ "tail", "-f", "/dev/null"]
+

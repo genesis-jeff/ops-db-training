@@ -1,0 +1,122 @@
+# docker-compose -p shard -f mongodb-shard-cluster.yml up
+# 
+# 
+# # Create config 
+# docker exec -it conf0 bash
+# mongo localhost:27019
+# rs.initiate(
+#   {
+#     _id: "cnf0",
+#     configsvr: true,
+#     members: [
+#       { _id : 0, host : "conf0:27019" },
+#       { _id : 1, host : "conf1:27019" },
+#       { _id : 2, host : "conf2:27019" }
+#     ]
+#   }
+# )
+# # Wait till primary
+# 
+# 
+# # Create replica set
+# docker exec -it rs0 bash
+# 
+# mongo localhost:27018
+# rs.initiate(
+#   {
+#     _id: "shard0",
+#     members: [
+#       { _id : 0, host : "rs0:27018" },
+#       { _id : 1, host : "rs1:27018" },
+#       { _id : 2, host : "rs2:27018" }
+#     ]
+#   }
+# )
+# # Wait till primary
+# 
+# 
+# # Add Shard to mongos
+# docker exec -it mongos0 bash
+# mongo localhost:27017
+# 
+# sh.addShard( "shard0/rs0:27018")
+# 
+# # Verify
+# sh.status()
+# 
+
+
+version: '3'
+services:
+  rs0:
+    container_name: rs0
+    image: "mongo:3.4"
+    volumes:
+      - ./data/mongodb/r0:/data/db
+    restart: always
+    expose:
+      - "27017:27019"
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "shard0", "--shardsvr", "--smallfiles", "--oplogSize", "128"]
+  rs1:
+    container_name: rs1
+    image: "mongo:3.4"
+    volumes:
+      - ./data/mongodb/r1:/data/db
+    restart: always
+    expose:
+      - "27017:27019"
+    entrypoint: [ "/usr/bin/mongod",  "--replSet", "shard0", "--shardsvr", "--smallfiles", "--oplogSize", "128"]
+  rs2:
+    container_name: rs2
+    image: "mongo:3.4"
+    volumes:
+      - ./data/mongodb/r2:/data/db
+    restart: always
+    expose:
+      - "27017:27019"
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "shard0", "--shardsvr", "--smallfiles", "--oplogSize", "128"]
+
+
+  conf0:
+    container_name: conf0
+    image: "mongo:3.4"
+    volumes:
+      - ./data/mongodb/c0:/data/db
+    restart: always
+    expose:
+      - "27017:27019"
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "cnf0", "--configsvr", "--smallfiles", "--oplogSize", "10"]
+  conf1:
+    container_name: conf1
+    image: "mongo:3.4"
+    volumes:
+      - ./data/mongodb/c1:/data/db
+    restart: always
+    expose:
+      - "27017:27019"
+    entrypoint: [ "/usr/bin/mongod",  "--replSet", "cnf0", "--configsvr", "--smallfiles", "--oplogSize", "10"]
+  conf2:
+    container_name: conf2
+    image: "mongo:3.4"
+    volumes:
+      - ./data/mongodb/c2:/data/db
+    restart: always
+    expose:
+      - "27017:27019"
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "cnf0", "--configsvr", "--smallfiles", "--oplogSize", "10"]
+
+  mongos0:
+    container_name: mongos0
+    image: "mongo:3.4"
+    restart: always
+    expose:
+      - "27017:27019"
+    entrypoint: [ "/usr/bin/mongos", "--configdb", "cnf0/conf0:27019,conf1:27019,conf2:27019"]
+
+  mongos1:
+    container_name: mongos1
+    image: "mongo:3.4"
+    restart: always
+    expose:
+      - "27017:27019"
+    entrypoint: [ "/usr/bin/mongos", "--configdb", "cnf0/conf0:27019,conf1:27019,conf2:27019"]

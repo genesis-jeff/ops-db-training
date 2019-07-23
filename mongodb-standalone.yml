@@ -1,0 +1,21 @@
+# docker-compose -p standalone -f mongodb-standalone.yml up
+# 
+# 
+
+version: '3'
+services:
+  standalone0:
+    container_name: standalone0
+    image: "mongo:3.4"
+    restart: always
+    ports:
+      - "27017:27017"
+    entrypoint: [ "/usr/bin/mongod", "--smallfiles", "--port", "27017"]
+  standalone1:
+    container_name: standalone1
+    image: "mongo:3.4"
+    restart: always
+    ports:
+      - "27018:27018"
+    entrypoint: [ "/usr/bin/mongod",  "--auth", "--smallfiles", "--port", "27018"]
+
