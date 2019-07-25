@@ -338,4 +338,16 @@ mongo localhost:27017
 sh.addShard("shard1/rs3:27018")
 ```
 
+---
 
+### Mongodb Ops Manager
+
+- Initial Setup
+- Prepare nodes
+- Install Automation Agents on nodes
+- Deploy replica set
+- Suspend automation
+
+```
+systemctl stop mongodb-mms-automation-agent.service
+```
