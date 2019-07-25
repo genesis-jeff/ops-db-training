@@ -1,0 +1,118 @@
+# docker-compose -p docker -f mongodb-ops-manager.yml up
+#
+version: '3'
+services:
+  appmongo:
+    container_name: appmongo
+    image: mongo:3.4
+    environment:
+      - TZ="Asia/Manila"
+  
+  backupmongo1:
+    container_name: backupmongo1
+    image: mongo:3.4
+    environment:
+      - TZ="Asia/Manila"
+        #    command: --replSet "backupmongo"
+
+    #  backupmongo2:
+    #    container_name: backupmongo2
+    #    image: mongo:3.4
+    #    environment:
+    #      - TZ="Asia/Manila"
+    #      - DNSDOCK_ALIAS=backupmongo2.docker
+    #    dns: ["172.17.0.1"]
+    #    command: --replSet "backupmongo"
+    #
+    #  backupmongo3:
+    #    container_name: backupmongo3
+    #    image: mongo:3.4
+    #    environment:
+    #      - TZ="Asia/Manila"
+    #    command: --replSet "backupmongo"
+  
+  opsmanager:
+    container_name: opsmanager
+    image: gengame/mongodb-ops-manager:1.1.0-SNAPSHOT
+    expose:
+      - "8080"
+    environment:
+      - TZ="Asia/Manila"
+      - OPSMANAGER_MONGO_APP=appmongo:27017/?maxPoolSize=100
+#      - OPSMANAGER_BACKUPMONGO=backupmongo1.docker:27017,backupmongo2.docker:27017,backupmongo3.docker:27017/?maxPoolSize=100&replicaSet=backupmongo
+      - OPSMANAGER_BACKUPMONGO=backupmongo1.docker:27017/?maxPoolSize=100
+      - OPSMANAGER_CENTRALURL=opsmanager
+      - OPSMANAGER_CENTRALURLPORT=8080
+      - OPSMANAGER_GEN_KEY=UlzOcc6qCoKqPcyDtlbuQQ1ajbHuB30x
+  
+  node1:
+    container_name: node1
+    image: centos:7.4.1708
+    environment:
+      - TZ="Asia/Manila"
+    expose:
+      - "27000-28000"
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    tmpfs:
+      - /run
+      - /tmp
+    cap_add:
+      - ALL
+    entrypoint:
+      - /usr/sbin/init
+
+  node2:
+    container_name: node2
+    image: centos:7.4.1708
+    environment:
+      - TZ="Asia/Manila"
+    expose:
+      - "27000-28000"
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    tmpfs:
+      - /run
+      - /tmp
+    cap_add:
+      - ALL
+    entrypoint:
+      - /usr/sbin/init
+
+  node3:
+    container_name: node3
+    image: centos:7.4.1708
+    environment:
+      - TZ="Asia/Manila"
+    expose:
+      - "27000-28000"
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    tmpfs:
+      - /run
+      - /tmp
+    cap_add:
+      - ALL
+    entrypoint:
+      - /usr/sbin/init
+
+  agent:
+    container_name: agent
+    image: centos:7.4.1708
+    environment:
+      - TZ="Asia/Manila"
+    expose:
+      - "27000-28000"
+    privileged: true
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    tmpfs:
+      - /run
+      - /tmp
+    cap_add:
+      - ALL
+    entrypoint:
+      - /usr/sbin/init

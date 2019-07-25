@@ -24,28 +24,28 @@ version: '3'
 services:
   rs0:
     container_name: rs0
-    image: "mongo:3.4"
+    image: "mongo:3.4.10"
     volumes:
       - ./rs/mongodb/r0:/data/db
     expose:
       - "27017"
-    entrypoint: [ "/usr/bin/mongod", "--replSet", "myrs", "--smallfiles", "--oplogSize", "10"]
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "myrs", "--oplogSize", "10"]
   rs1:
     container_name: rs1
-    image: "mongo:3.4"
+    image: "mongo:3.4.10"
     volumes:
       - ./rs/mongodb/r1:/data/db
     expose:
       - "27017"
-    entrypoint: [ "/usr/bin/mongod",  "--replSet", "myrs", "--smallfiles", "--oplogSize", "10"]
+    entrypoint: [ "/usr/bin/mongod",  "--replSet", "myrs", "--oplogSize", "10"]
   rs2:
     container_name: rs2
-    image: "mongo:3.4"
+    image: "mongo:3.4.10"
     volumes:
       - ./rs/mongodb/r2:/data/db
     expose:
       - "27017"
-    entrypoint: [ "/usr/bin/mongod", "--replSet", "myrs", "--smallfiles", "--oplogSize", "10"]
+    entrypoint: [ "/usr/bin/mongod", "--replSet", "myrs", "--oplogSize", "10"]
   java:
     container_name: java
     image: "openjdk:8"
