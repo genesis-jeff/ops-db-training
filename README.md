@@ -42,6 +42,7 @@ https://staroad.atlassian.net/wiki/spaces/ITOPS/pages/461373742/Locate+and+kill+
 
 ```
 db.currentOp()
+
 ```	
 ---
 
@@ -51,50 +52,57 @@ https://docs.mongodb.com/v3.4/core/replica-set-architecture-three-members/#three
 
 - Initiate a replicaset
 https://docs.mongodb.com/manual/administration/replica-set-deployment/
+
 ```
 rs.initiate(
   {
-    _id: "shard0",
+    _id: "myrs",
 	members: [
-	  { _id : 0, host : "rs0:27018" },
-	  { _id : 1, host : "rs1:27018" },
-	  { _id : 2, host : "rs2:27018" }
+	  { _id : 0, host : "rs0:27017" },
+	  { _id : 1, host : "rs1:27017" },
+	  { _id : 2, host : "rs2:27017" }
 	]
   }
 )
+
 ```
 
 ---
 
 - Check status
+
 ```
 rs.status()
+rs.isMaster()
 ```
-
 - Shutdown process
+
 https://docs.mongodb.com/v3.4/tutorial/manage-mongodb-processes/
+
 ```
-use admin; db.shutdown()
+use admin
+db.shutdownServer()
+
 ```
 
-- Rolling Restart
-  - Ensure node is not primary 
+---
+
+### Rolling Restart
+
+- Ensure node is not primary 
 ```
 rs.stepDown()
 ```
-  - Verify 
+- Verify 
 ```
 rs.isMaster()
 ```
-  - sdfsd
----
-- Rolling Restart
-  - Shutdown node
+- Shutdown node
 ```
 db.shutdownServer()
 ```
 
-  - Start mongod process
+- Start mongod process
 ```
 mongod --port --shardsvr ...
 ```
@@ -102,52 +110,85 @@ mongod --port --shardsvr ...
 ---
 
 - Force a member to be primary
+
 https://docs.mongodb.com/v3.4/tutorial/force-member-to-be-primary/#force-a-member-to-be-primary-using-database-commands
 ```
 rs.freeze()
 ```
 
-- Handling stale secondary
+---
+
+- Handling stale secondary 
+
 https://docs.mongodb.com/v3.4/tutorial/resync-replica-set-member/index.html#resync-a-member-of-a-replica-set
 
 > [rsBackgroundSync] too stale to catch up -- entering maintenance mode
 
+
 ---
 
-  - Shutdown stale node
+ * Shutdown stale node
+
 ```
 db.shutdownServer()
 ```
+
  * Delete data folder.
+
 ```
 rm -rf /data/db/*
 ```
+
  * Start mongod process
+
 ```		
 mongod --port --shardsvr
 ```		
+ 
  * View oldest oplog entry
+
 ```
 rs.printReplicationInfo()
 ```
+
  * Generate data
+
 ```
 docker exec -it java bash
-java -jar POCDriver.jar -k 20 -i 10 -u 10 -b 20 -c "mongodb://172.23.0.2,172.23.0.3,172.23.0.4:27018/?replicaSet=shard0"
+java -jar /java/POCDriver.jar -k 20 -i 10 -u 10 -b 20 -c "mongodb://172.23.0.4,172.23.0.5,172.23.0.6:27017/?replicaSet=myrs"
 ```
 
 ---
 
+### What if OPLOG is not enough 
+
+- Resize Oplog? 
+
+- Volume snapshot.
+
+---
+
+### WriteConcern and Journal (v3.4.10)
+
+- Defaults
+  - w:1 (primary only)
+  - j: unspecified (j:false)
+
+- COLO: journal is enabled
+  
+---
+
 ## Sharded cluster
-https://docs.mongodb.com/v3.4/tutorial/deploy-shard-cluster/index.html#deploy-a-sharded-cluster
+ https://docs.mongodb.com/v3.4/tutorial/deploy-shard-cluster/index.html#deploy-a-sharded-cluster
 
-Summary: 
+- Summary: 
 
- - Deploy config replica set
- - Deploy shard(s)
- - Add shards thru mongos
-
-
+ Initiate config replica set (--configsvr)
+ 
+ Initiate shard(s) replica set (--shardsvr)
+ 
+ Add shards thru mongos
+ 
 ```
 docker-compose -p shard -f mongodb-shard-cluster.yml up
 ```
@@ -195,3 +236,106 @@ rs.initiate(
 ---
 
 - Add shards
+
+```
+docker exec -it mongos0 bash
+mongo localhost:27017
+ 
+sh.addShard("shard0/rs0:27018")
+```
+
+- Verify
+
+```
+sh.status()
+```
+
+- Generate Data
+
+```
+docker exec -it java bash
+java -jar /java/POCDriver.jar -k 20 -i 10 -u 10 -b 20 -w -c "mongodb://mongos0"
+```
+
+---
+
+- Shard Distribution
+
+```
+use POCDB
+
+mongos> db.POCCOLL.getShardDistribution()
+
+Shard shard0 at shard0/rs0:27018,rs1:27018,rs2:27018
+ data : 42.73MiB docs : 151717 chunks : 5
+ estimated data per chunk : 8.54MiB
+ estimated docs per chunk : 30343
+```
+
+---
+
+## Shard a collection
+https://docs.mongodb.com/v3.4/tutorial/deploy-sharded-cluster-hashed-sharding/
+
+- Create hashed index
+
+```
+db.POCCOLL.createIndex({_id: 'hashed'})
+```
+
+- Enable sharding on database
+
+```
+sh.enableSharding("POCDB")
+
+```
+
+- Shard collection using hashed key
+
+```
+sh.shardCollection("POCDB.POCCOLL", { _id : "hashed" } )
+```
+
+---
+
+### Balancer Management
+```
+sh.getBalancerState()
+sh.setBalancerState({true/false})
+```
+
+---
+
+- Create another shard (shard1)
+
+```
+docker-compose -p shard -f mongodb-shard-cluster.yml up rs3 rs4 rs5
+```
+
+
+```
+docker exec -it rs3 bash
+
+mongo localhost:27018
+rs.initiate(
+  { 
+    _id: "shard1",
+    members: [ 
+      { _id : 0, host : "rs3:27018" },
+      { _id : 1, host : "rs4:27018" },
+      { _id : 2, host : "rs5:27018" } 
+    ] 
+  } 
+)
+```
+
+- Add shard1 to mongos
+
+```
+docker exec -it mongos0 bash
+mongo localhost:27017
+
+sh.addShard("shard1/rs3:27018")
+```
+
+
