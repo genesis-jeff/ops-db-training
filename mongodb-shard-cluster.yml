@@ -1,50 +1,5 @@
 # docker-compose -p shard -f mongodb-shard-cluster.yml up
 # 
-# 
-# # Create config 
-# docker exec -it conf0 bash
-# mongo localhost:27019
-# rs.initiate(
-#   {
-#     _id: "cnf0",
-#     configsvr: true,
-#     members: [
-#       { _id : 0, host : "conf0:27019" },
-#       { _id : 1, host : "conf1:27019" },
-#       { _id : 2, host : "conf2:27019" }
-#     ]
-#   }
-# )
-# # Wait till primary
-# 
-# 
-# # Create replica set
-# docker exec -it rs0 bash
-# 
-# mongo localhost:27018
-# rs.initiate(
-#   {
-#     _id: "shard0",
-#     members: [
-#       { _id : 0, host : "rs0:27018" },
-#       { _id : 1, host : "rs1:27018" },
-#       { _id : 2, host : "rs2:27018" }
-#     ]
-#   }
-# )
-# # Wait till primary
-# 
-# 
-# # Add Shard to mongos
-# docker exec -it mongos0 bash
-# mongo localhost:27017
-# 
-# sh.addShard( "shard0/rs0:27018")
-# 
-# # Verify
-# sh.status()
-# 
-
 
 version: '3'
 services:
