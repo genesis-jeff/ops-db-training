@@ -340,14 +340,34 @@ sh.addShard("shard1/rs3:27018")
 
 ---
 
+### Shutdown and Restart Sequence
+
+- Shutdown
+  - Shutdown mongos
+  - Shutdown current secondary members from config and shard replica set
+  - Shutdown primary node w/c will automatically steps down after the previous step
+- Restart
+  - Start shard and config replica sets
+  - Start mongos
+
+---
+
 ### Mongodb Ops Manager
 
 - Initial Setup
 - Prepare nodes
 - Install Automation Agents on nodes
 - Deploy replica set
-- Suspend automation
+- Suspend automation agent via Ops Manager
 
 ```
 systemctl stop mongodb-mms-automation-agent.service
 ```
+
+--- 
+
+### Shutdown and Restart Sequence
+
+- https://staroad.atlassian.net/wiki/x/EoAfCw
+
+---
