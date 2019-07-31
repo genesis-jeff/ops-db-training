@@ -54,6 +54,10 @@ https://docs.mongodb.com/v3.4/core/replica-set-architecture-three-members/#three
 https://docs.mongodb.com/manual/administration/replica-set-deployment/
 
 ```
+docker exec -it rs0 bash
+
+mongo
+
 rs.initiate(
   {
     _id: "myrs",
@@ -155,7 +159,7 @@ rs.printReplicationInfo()
 
 ```
 docker exec -it java bash
-java -jar /java/POCDriver.jar -k 20 -i 10 -u 10 -b 20 -c "mongodb://172.23.0.4,172.23.0.5,172.23.0.6:27017/?replicaSet=myrs"
+java -jar /java/POCDriver.jar -k 20 -i 10 -u 10 -b 20 -c "mongodb://rs0,rs1,rs2:27017/?replicaSet=myrs"
 ```
 
 ---
@@ -363,6 +367,9 @@ sh.addShard("shard1/rs3:27018")
 ```
 systemctl stop mongodb-mms-automation-agent.service
 ```
+--- 
+### Install Automation Agent
+![agent](ops-agent.png  "agent")
 
 --- 
 
